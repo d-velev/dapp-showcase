@@ -6,10 +6,10 @@
           <p class="title">Dapp showcase</p>
           <p class="subtitle">discover popular and newly emerging dapps</p>
           <div class="buttons">
-            <v-btn rounded="0" color="red" size="large" variant="flat" class="landing-btn">
+            <v-btn rounded="0" color="red" size="large" variant="flat" class="landing-btn text-black">
               submit dapp
             </v-btn>
-            <v-btn rounded="0" color="red" size="large" variant="flat" class="landing-btn">
+            <v-btn rounded="0" color="red" size="large" variant="flat" class="landing-btn text-black">
               vote for dapps
             </v-btn>
           </div>
