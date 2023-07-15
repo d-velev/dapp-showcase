@@ -28,3 +28,16 @@ nav a {
     text-decoration: none;
     font-weight: bold;
 }
+
+.connect {
+    display: flex;
+
+    min-height: 36px;
+
+    .connect-btn,
+    .account {
+        margin-left: auto;
+        margin-right: 30px;
+        margin-bottom: 30px;
+    }
+}
