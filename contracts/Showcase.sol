@@ -30,13 +30,19 @@ contract Showcase {
         SubmittedVotes submittedVotes;
     }
 
-    mapping(bytes32 => PendingDapp) public pendingDapps;
-    mapping(bytes32 => bool) public approvedDapps;
+    string[] pendingDappAddresses;
+    mapping(string => PendingDapp) public pendingDapps;
+    mapping(string => bool) public approvedDapps;
 
-    function submitDapp(bytes32 ipfsHash) public payable {
+    function getPendingDappAddresses() public view returns (string[] memory) {
+        return pendingDappAddresses;
+    }
+
+    function submitDapp(string memory ipfsAddress) public payable {
         require(
-            !(approvedDapps[ipfsHash] || pendingDapps[ipfsHash].isInitialized),
-            "Dapp with this hash already pending or approved"
+            !(approvedDapps[ipfsAddress] ||
+                pendingDapps[ipfsAddress].isInitialized),
+            "Dapp with this address already pending or approved"
         );
 
         require(
@@ -44,11 +50,12 @@ contract Showcase {
             "Transaction must include the minimum deposit"
         );
 
-        PendingDapp storage pendingDapp = pendingDapps[ipfsHash];
+        PendingDapp storage pendingDapp = pendingDapps[ipfsAddress];
         pendingDapp.isInitialized = true;
         pendingDapp.owner = msg.sender;
         pendingDapp.deposit = msg.value;
         pendingDapp.submissionHeight = block.number;
         pendingDapp.rewardPool = 0;
+        pendingDappAddresses.push(ipfsAddress);
     }
 }
