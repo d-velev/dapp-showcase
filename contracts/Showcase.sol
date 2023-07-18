@@ -10,7 +10,6 @@ contract Showcase {
     struct Vote {
         bytes32 commitmentHash;
         uint amount;
-        //
         bool isConfirmed;
     }
 
