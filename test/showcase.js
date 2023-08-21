@@ -14,7 +14,7 @@ contract("Showcase", (accounts) => {
             try {
                 await showcaseInstance.submitDapp(ipfsAddress)
             } catch (error) {
-                assert.equal(error.data.reason, "Dapp with this address already pending or approved")
+                assert.equal(error.data.reason, "Dapp with this address already pending")
             }
         });
         it("should fail if minimum deposit isn't given", async () => {
@@ -83,6 +83,7 @@ contract("Showcase", (accounts) => {
             const commitmentHash = "0x248092f167c5d47499621b1b9f4c31c1759f24d6b078b007bdc18b539f7c569d";
 
             await showcaseInstance.vote(ipfsAddress, commitmentHash, { from: accounts[0], value: 10 })
+            await advanceBlock()
 
             // 0x00 stands for reject
             await showcaseInstance.submitCommitment(ipfsAddress, "0x00", "0x84b6d330ece9a24eb9dc4589854ff8dfad0038c6bad339118c9bb8b3ad675c24")
@@ -104,6 +105,7 @@ contract("Showcase", (accounts) => {
             const commitmentHash = "0x248092f167c5d47499621b1b9f4c31c1759f24d6b078b007bdc18b539f7c569d";
 
             await showcaseInstance.vote(ipfsAddress, commitmentHash, { from: accounts[0], value: 10 })
+            await advanceBlock()
 
             try {
                 // submit from another account
@@ -129,6 +131,7 @@ contract("Showcase", (accounts) => {
             const commitmentHash = "0x248092f167c5d47499621b1b9f4c31c1759f24d6b078b007bdc18b539f7c569d";
 
             await showcaseInstance.vote(ipfsAddress, commitmentHash, { from: accounts[0], value: 10 })
+            await advanceBlock()
 
             try {
                 // vote option is either 0x00 or 0x01
@@ -146,6 +149,7 @@ contract("Showcase", (accounts) => {
             const commitmentHash = "0x248092f167c5d47499621b1b9f4c31c1759f24d6b078b007bdc18b539f7c569d";
 
             await showcaseInstance.vote(ipfsAddress, commitmentHash, { from: accounts[0], value: 10 })
+            await advanceBlock()
 
             try {
                 // attempt to submit 0x01
@@ -155,4 +159,20 @@ contract("Showcase", (accounts) => {
             }
         });
     })
+
+    function advanceBlock() {
+        return new Promise((resolve, reject) => {
+            web3.currentProvider.send({
+                jsonrpc: '2.0',
+                method: 'evm_mine',
+                id: new Date().getTime()
+            }, (err, result) => {
+                if (err) { return reject(err) }
+                const newBlockHash = web3.eth.getBlock('latest').hash
+
+                return resolve(newBlockHash)
+            })
+        })
+    }
+
 });

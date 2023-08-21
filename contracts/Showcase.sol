@@ -3,7 +3,8 @@ pragma solidity ^0.8.19;
 
 contract Showcase {
     uint private constant MINIMUM_DEPOSIT = 1 wei;
-    uint private constant BLOCKS_PER_VOTING_PERIOD = 2;
+    uint private constant BLOCKS_PER_VOTING_PERIOD = 1;
+    uint private constant VOTER_REWARD_POOL_PERCENTAGE = 99;
     bytes1 private constant VOTE_OPTION_REJECT = 0x00;
     bytes1 private constant VOTE_OPTION_APPROVE = 0x01;
 
@@ -33,20 +34,67 @@ contract Showcase {
         SubmittedVotes submittedVotes;
     }
 
+    struct PendingDappPeriod {
+        string ipfsAddress;
+        string period;
+    }
+
     string[] pendingDappAddresses;
     mapping(string => PendingDapp) public pendingDapps;
 
-    mapping(string => bool) public approvedDapps;
+    string[] approvedDappAddresses;
 
-    function getPendingDappAddresses() public view returns (string[] memory) {
-        return pendingDappAddresses;
+    function getApprovedDappAddresses() public view returns (string[] memory) {
+        return approvedDappAddresses;
+    }
+
+    function getPendingDappAddresses()
+        public
+        view
+        returns (PendingDappPeriod[] memory)
+    {
+        uint arrayLen = pendingDappAddresses.length;
+        PendingDappPeriod[] memory dappsWithPeriod = new PendingDappPeriod[](
+            arrayLen
+        );
+        for (uint256 i = 0; i < arrayLen; ++i) {
+            PendingDappPeriod memory dapp;
+            PendingDapp storage pendingDapp = pendingDapps[
+                pendingDappAddresses[i]
+            ];
+            if (pendingDapp.isInitialized) {
+                dapp.ipfsAddress = pendingDappAddresses[i];
+                dapp.period = calculateCurrentDappPeriod(
+                    pendingDapp.submissionHeight
+                );
+                dappsWithPeriod[i] = dapp;
+            }
+        }
+        return dappsWithPeriod;
+    }
+
+    function hasVotedForDapp(
+        address adr,
+        string memory ipfsAddress
+    ) public view returns (bool) {
+        PendingDapp storage pendingDapp = pendingDapps[ipfsAddress];
+
+        return pendingDapp.voters[adr].amount > 0;
+    }
+
+    function hasSubmittedVoteForDapp(
+        address adr,
+        string memory ipfsAddress
+    ) public view returns (bool) {
+        PendingDapp storage pendingDapp = pendingDapps[ipfsAddress];
+
+        return pendingDapp.voters[adr].isConfirmed;
     }
 
     function submitDapp(string memory ipfsAddress) public payable {
         require(
-            !(approvedDapps[ipfsAddress] ||
-                pendingDapps[ipfsAddress].isInitialized),
-            "Dapp with this address already pending or approved"
+            !pendingDapps[ipfsAddress].isInitialized,
+            "Dapp with this address already pending"
         );
 
         require(
@@ -70,14 +118,6 @@ contract Showcase {
         PendingDapp storage pendingDapp = pendingDapps[ipfsAddress];
 
         require(
-            pendingDapp.isInitialized &&
-                (block.number >= pendingDapp.submissionHeight &&
-                    block.number <=
-                    pendingDapp.submissionHeight + BLOCKS_PER_VOTING_PERIOD),
-            "Dapp not in voting period or pending"
-        );
-
-        require(
             pendingDapp.voters[msg.sender].amount == 0,
             "Sender has already voted"
         );
@@ -97,17 +137,6 @@ contract Showcase {
         bytes32 salt
     ) public {
         PendingDapp storage pendingDapp = pendingDapps[ipfsAddress];
-
-        require(
-            pendingDapp.isInitialized &&
-                (block.number >=
-                    pendingDapp.submissionHeight + BLOCKS_PER_VOTING_PERIOD &&
-                    block.number <=
-                    pendingDapp.submissionHeight +
-                        BLOCKS_PER_VOTING_PERIOD *
-                        2),
-            "Dapp not in commitment submission period or pending"
-        );
 
         require(
             pendingDapp.voters[msg.sender].amount > 0,
@@ -144,5 +173,81 @@ contract Showcase {
         }
 
         pendingDapp.voters[msg.sender].isConfirmed = true;
+    }
+
+    function finalizeDapp(string memory ipfsAddress) public {
+        PendingDapp storage pendingDapp = pendingDapps[ipfsAddress];
+
+        uint voterRewardPool = percent(
+            pendingDapp.rewardPool + pendingDapp.deposit,
+            VOTER_REWARD_POOL_PERCENTAGE
+        );
+        uint updaterReward = pendingDapp.rewardPool +
+            pendingDapp.deposit -
+            voterRewardPool;
+
+        // 1% of the total reward pool goes to the updater as an incentive
+        payable(msg.sender).transfer(updaterReward);
+
+        if (
+            pendingDapp.submittedVotes.approve.totalVotes >
+            pendingDapp.submittedVotes.reject.totalVotes
+        ) {
+            approvedDappAddresses.push(ipfsAddress);
+            distributeRewards(
+                pendingDapp.submittedVotes.approve.addresses,
+                pendingDapp.voters,
+                voterRewardPool,
+                pendingDapp.submittedVotes.approve.totalVotes
+            );
+        } else {
+            distributeRewards(
+                pendingDapp.submittedVotes.reject.addresses,
+                pendingDapp.voters,
+                voterRewardPool,
+                pendingDapp.submittedVotes.reject.totalVotes
+            );
+        }
+
+        pendingDapp.isInitialized = false;
+    }
+
+    function distributeRewards(
+        address[] storage winningAddresses,
+        mapping(address => Vote) storage voters,
+        uint totalRewardPool,
+        uint winningGroupPool
+    ) private {
+        uint arrayLen = winningAddresses.length;
+
+        for (uint256 i = 0; i < arrayLen; ++i) {
+            uint voterAmount = voters[winningAddresses[i]].amount;
+            uint voterPercentage = (voterAmount * 100) / winningGroupPool;
+            uint voterReward = percent(totalRewardPool, voterPercentage);
+            payable(winningAddresses[i]).transfer(voterReward);
+        }
+    }
+
+    function percent(uint value, uint percentage) private pure returns (uint) {
+        return (value * percentage) / 100;
+    }
+
+    function calculateCurrentDappPeriod(
+        uint submissionHeight
+    ) private view returns (string memory) {
+        uint blockNumber = block.number;
+        if (
+            blockNumber >= submissionHeight &&
+            blockNumber < submissionHeight + BLOCKS_PER_VOTING_PERIOD
+        ) {
+            return "vote";
+        } else if (
+            blockNumber >= submissionHeight + BLOCKS_PER_VOTING_PERIOD &&
+            blockNumber < submissionHeight + BLOCKS_PER_VOTING_PERIOD * 2
+        ) {
+            return "submit";
+        } else {
+            return "finalize";
+        }
     }
 }

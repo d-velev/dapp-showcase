@@ -6,9 +6,8 @@
 
 html,
 body {
-    margin: 0;
-    padding: 0;
-    background-color: #151515;
+    overflow-y: hidden;
+    background-color: #ffffff;
 }
 
 #app {
@@ -16,28 +15,9 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-align: center;
-    color: #FFFFFF;
+    color: #000000;
 }
 
-nav {
-    padding: 30px;
-}
-
-nav a {
-    color: #FFFFFF;
-    text-decoration: none;
-    font-weight: bold;
-}
-
-.connect {
-    display: flex;
-
-    min-height: 36px;
-
-    .connect-btn,
-    .account {
-        margin-left: auto;
-        margin-right: 30px;
-        margin-bottom: 30px;
-    }
+.v-app-bar {
+    border-bottom: 1px solid !important;
 }

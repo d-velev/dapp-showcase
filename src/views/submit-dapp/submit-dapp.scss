@@ -4,7 +4,9 @@ body {
 
 .submit-text {
     font-size: 40px;
+    margin-top: 20px;
     margin-bottom: 20px;
+    text-align: left;
 }
 
 .form {
@@ -14,6 +16,7 @@ body {
 
 .form-item {
     padding: 5px;
+    text-align: center;
 }
 
 .img-border {
@@ -22,5 +25,5 @@ body {
     height: 200px;
     width: 200px;
     padding: 10px;
-    border: 3px dashed #F44336;
+    border: 2px dashed;
 }

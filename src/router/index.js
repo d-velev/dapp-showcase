@@ -1,6 +1,7 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import HomeView from '../views/home/HomeView.vue'
 import SubmitDappView from '../views/submit-dapp/SubmitDappView.vue'
+import VotingView from '../views/voting/VotingView.vue'
 
 
 const routes = [
@@ -13,6 +14,11 @@ const routes = [
         path: '/submit-dapp',
         name: 'submit-dapp',
         component: SubmitDappView
+    },
+    {
+        path: '/voting',
+        name: 'voting',
+        component: VotingView
     }
 ]
 
