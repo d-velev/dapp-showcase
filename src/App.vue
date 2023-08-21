@@ -1,13 +1,26 @@
 <template>
-  <nav>
-  </nav>
-  <div class="connect">
-    <v-btn v-if="!account" rounded color="blue" class="connect-btn" v-on:click="connect">
-      Connect to MetaMask
-    </v-btn>
-    <p v-else class="account">Connected with account: {{ getShortenedAccount() }}</p>
-  </div>
-  <router-view />
+  <v-app>
+    <v-app-bar elevation="3" height="90">
+      <template v-slot:prepend>
+        <router-link to="/" class="ml-8"><img src="../src/assets/logo.png" width="35"></router-link>
+      </template>
+      <v-list>
+        <router-link to="/"><v-chip variant="outlined" color="black" class="mx-2" link>home</v-chip></router-link>
+        <router-link to="/submit-dapp"><v-chip variant="outlined" color="black" class="mr-2" link>submit
+            dapp</v-chip></router-link>
+        <router-link to="/voting"><v-chip variant="outlined" color="black" link>voting</v-chip></router-link>
+      </v-list>
+      <template v-slot:append>
+        <v-btn v-if="!account" variant="flat" color="black" rounded v-on:click="connect">
+          Connect
+        </v-btn>
+        <p v-else class="account mr-3">Connected with account: {{ getShortenedAccount() }}</p>
+      </template>
+    </v-app-bar>
+    <v-main>
+      <router-view />
+    </v-main>
+  </v-app>
 </template>
 
 <script>

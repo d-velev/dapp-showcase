@@ -1,7 +1,8 @@
 <template>
+    <meta name="referrer" content="no-referrer" />
     <div class="form">
         <p class="submit-text">Submit a new dapp</p>
-        <v-form v-model="isFormValid">
+        <v-form v-model="isFormValid" class="text-xs-center">
             <v-text-field v-model="name" :rules="[required, minLength(3)]" maxLength="20" label="Name"
                 class="form-item"></v-text-field>
 
@@ -21,10 +22,10 @@
                 <v-img :src=logo max-height="200" />
             </div>
 
-            <v-btn v-if="!submitInProgress" :disabled="!isFormValid" color="red" v-on:click="submitDapp" class="text-black">
+            <v-btn v-if="!submitInProgress" :disabled="!isFormValid" color="black" v-on:click="submitDapp">
                 submit
             </v-btn>
-            <v-progress-circular v-else indeterminate color="red"></v-progress-circular>
+            <v-progress-circular v-else indeterminate></v-progress-circular>
         </v-form>
     </div>
 </template>
@@ -33,6 +34,7 @@
 
 import { useIpfs } from "../../composables/ipfs.js"
 import { useContract } from "../../composables/contract.js"
+const { add } = useIpfs();
 
 export default {
     name: 'SubmitDappView',
@@ -85,12 +87,12 @@ export default {
         },
         async submitDapp() {
             this.submitInProgress = true;
-            const { add } = await useIpfs();
+            // const { add } = await useIpfs();
             const { submitDapp } = useContract();
 
             const dapp = { name: this.name, description: this.description, contractAddress: this.contractAddress, website: this.website, logo: this.logo }
             add(dapp).then(address => {
-                submitDapp(address.toString())
+                submitDapp(address.cid.toString())
                     .then(() => {
                         this.submitInProgress = false;
                     })

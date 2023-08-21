@@ -1,0 +1,30 @@
+.v-card {
+    text-align: left;
+}
+
+.logo {
+    border: 1px solid;
+}
+
+.voting-text {
+    font-size: 40px;
+}
+
+.main-divider {
+    margin-bottom: 24px;
+    width: 100vw;
+    margin-left: -38px;
+}
+
+.v-container {
+    padding: 38px !important;
+}
+
+.v-selection-control__input {
+    max-width: 20px;
+    max-height: 20px;
+}
+
+.v-selection-control__input input {
+    opacity: 100% !important;
+}
